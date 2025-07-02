@@ -12,7 +12,7 @@ services:
       - .env
     depends_on:
       - migrate
-    restart: unless-stopped
+    restart: always
 
   migrate:
     build: .
@@ -21,4 +21,4 @@ services:
       - .:/app
     env_file:
       - .env
-    restart: "no"
+    restart: always
