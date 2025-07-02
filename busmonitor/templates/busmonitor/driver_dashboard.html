@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Driver Dashboard</h2>
+{% if bus %}
+<p>Bus: {{ bus.number_plate }}</p>
+{% endif %}
+{% if route %}
+<p>Route: {{ route.name }} ({{ route.start_location }} to {{ route.end_location }})</p>
+{% endif %}
+<h3>Students on this Route</h3>
+<ul>
+  {% for student in students %}
+    <li>{{ student.name }} (RFID: {{ student.rfid }})</li>
+  {% endfor %}
+</ul>
+<ul>
+  <li><a href="{% url 'driver_bus_map' %}">View Your Bus Location</a></li>
+</ul>
+{% endblock %}

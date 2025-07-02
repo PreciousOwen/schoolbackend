@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="admin-dashboard">
+  <h2>Admin Dashboard</h2>
+  <div class="dashboard-section">
+    <h3>Quick Actions</h3>
+    <a href="{% url 'admin_register_all' %}" class="btn">Register Parent, Driver & Student</a>
+    <a href="{% url 'export_boarding_history' %}" class="btn">Download Boarding History (CSV)</a>
+  </div>
+  <div class="dashboard-section">
+    <h3>Students <a href="{% url 'student_add' %}" class="btn" style="float:right;">Add Student</a></h3>
+    <table><tr><th>Name</th><th>RFID</th><th>Parent</th><th>Route</th><th>Actions</th></tr>
+      {% for student in students %}
+      <tr>
+        <td>{{ student.name }}</td>
+        <td>{{ student.rfid }}</td>
+        <td>{{ student.parent.user.get_full_name }}</td>
+        <td>{{ student.route }}</td>
+        <td>
+          <a href="{% url 'student_edit' student.id %}" class="btn" style="background:#ffa000;">Edit</a>
+          <a href="{% url 'student_delete' student.id %}" class="btn" style="background:#d32f2f;">Delete</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+  <div class="dashboard-section">
+    <h3>Parents <a href="{% url 'parent_add' %}" class="btn" style="float:right;">Add Parent</a></h3>
+    <table><tr><th>Name</th><th>Phone</th><th>Actions</th></tr>
+      {% for parent in parents %}
+      <tr>
+        <td>{{ parent.user.get_full_name }}</td>
+        <td>{{ parent.phone_number }}</td>
+        <td>
+          <a href="{% url 'parent_edit' parent.id %}" class="btn" style="background:#ffa000;">Edit</a>
+          <a href="{% url 'parent_delete' parent.id %}" class="btn" style="background:#d32f2f;">Delete</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+  <div class="dashboard-section">
+    <h3>Drivers <a href="{% url 'driver_add' %}" class="btn" style="float:right;">Add Driver</a></h3>
+    <table><tr><th>Name</th><th>Phone</th><th>Actions</th></tr>
+      {% for driver in drivers %}
+      <tr>
+        <td>{{ driver.user.get_full_name }}</td>
+        <td>{{ driver.phone_number }}</td>
+        <td>
+          <a href="{% url 'driver_edit' driver.id %}" class="btn" style="background:#ffa000;">Edit</a>
+          <a href="{% url 'driver_delete' driver.id %}" class="btn" style="background:#d32f2f;">Delete</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+  <div class="dashboard-section">
+    <h3>Routes <a href="{% url 'route_add' %}" class="btn" style="float:right;">Add Route</a></h3>
+    <table><tr><th>Name</th><th>Start</th><th>End</th><th>Bus</th><th>Map</th><th>Actions</th></tr>
+      {% for route in routes %}
+      <tr>
+        <td>{{ route.name }}</td>
+        <td>{{ route.start_location }}</td>
+        <td>{{ route.end_location }}</td>
+        <td>{{ route.bus }}</td>
+        <td><a href="{% url 'route_map' route.id %}">View Map</a></td>
+        <td>
+          <a href="{% url 'route_edit' route.id %}" class="btn" style="background:#ffa000;">Edit</a>
+          <a href="{% url 'route_delete' route.id %}" class="btn" style="background:#d32f2f;">Delete</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+  <div class="dashboard-section">
+    <h3>Boarding History</h3>
+    <table><tr><th>Student</th><th>Bus</th><th>Timestamp</th><th>Action</th><th>GPS</th></tr>
+      {% for record in boarding_history %}
+      <tr><td>{{ record.student.name }}</td><td>{{ record.bus.number_plate }}</td><td>{{ record.timestamp }}</td><td>{{ record.action }}</td><td>{{ record.gps_location }}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  <div class="dashboard-section">
+    <h3>Buses <a href="{% url 'bus_add' %}" class="btn" style="float:right;">Add Bus</a></h3>
+    <table><tr><th>Number Plate</th><th>Driver</th><th>Current Location</th><th>Actions</th></tr>
+      {% for bus in buses %}
+      <tr>
+        <td>{{ bus.number_plate }}</td>
+        <td>{{ bus.driver.user.get_full_name }}</td>
+        <td>{% if bus.current_latitude and bus.current_longitude %}{{ bus.current_latitude }}, {{ bus.current_longitude }}{% else %}N/A{% endif %}</td>
+        <td>
+          <a href="{% url 'bus_edit' bus.id %}" class="btn" style="background:#ffa000;">Edit</a>
+          <a href="{% url 'bus_delete' bus.id %}" class="btn" style="background:#d32f2f;">Delete</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+<style>
+.admin-dashboard { max-width: 1200px; margin: 30px auto; }
+.dashboard-section { background: #fff; margin: 30px 0; padding: 20px 30px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+h2, h3 { color: #1976d2; text-align: left; }
+.btn { display: inline-block; margin: 10px 10px 10px 0; background: #1976d2; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; text-decoration: none; transition: background 0.2s; }
+.btn:hover { background: #125ea2; }
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+th, td { border: 1px solid #e0e0e0; padding: 8px 12px; text-align: left; }
+th { background: #f4f6f8; }
+</style>
+{% endblock %}

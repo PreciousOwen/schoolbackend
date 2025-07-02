@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Route Map: {{ route.name }}</h2>
+<p>From: {{ route.start_location }}<br>To: {{ route.end_location }}</p>
+<div id="map" style="height:400px;width:100%;"></div>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}"></script>
+<script>
+function initMap() {
+    var start = '{{ route.start_location|escapejs }}';
+    var end = '{{ route.end_location|escapejs }}';
+    var geocoder = new google.maps.Geocoder();
+    var map = new google.maps.Map(document.getElementById('map'), { zoom: 10, center: {lat:0, lng:0} });
+    geocoder.geocode({ 'address': start }, function(results, status) {
+        if (status === 'OK') {
+            map.setCenter(results[0].geometry.location);
+            var markerA = new google.maps.Marker({ map: map, position: results[0].geometry.location, label: 'A' });
+            geocoder.geocode({ 'address': end }, function(results2, status2) {
+                if (status2 === 'OK') {
+                    var markerB = new google.maps.Marker({ map: map, position: results2[0].geometry.location, label: 'B' });
+                    var bounds = new google.maps.LatLngBounds();
+                    bounds.extend(markerA.getPosition());
+                    bounds.extend(markerB.getPosition());
+                    map.fitBounds(bounds);
+                }
+            });
+        }
+    });
+}
+window.onload = initMap;
+</script>
+{% endblock %}

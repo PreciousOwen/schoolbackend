@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Parent Dashboard</h2>
+<h3>Your Children</h3>
+<ul>
+  {% for child in children %}
+    <li>{{ child.name }} (RFID: {{ child.rfid }}) - Route: {{ child.route }}</li>
+  {% endfor %}
+</ul>
+<ul>
+  <li><a href="{% url 'parent_bus_map' %}">View Your Child's Bus Location</a></li>
+</ul>
+{% endblock %}
