@@ -1,41 +1,101 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Your Bus Location</h2>
+<h2 style="color:var(--primary);margin-bottom:30px;text-align:center;">Your Bus Location</h2>
+
 {% if bus and bus.current_latitude and bus.current_longitude %}
-<div id="map" style="height:400px;width:100%;" data-lat="{{ bus.current_latitude }}" data-lng="{{ bus.current_longitude }}"></div>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDPqc3uljT9n77v0uTQikuRor5tSfSV0RI"></script>
-<script>
-function initMap() {
-    var lat = Number('{{ bus.current_latitude }}');
-    var lng = Number('{{ bus.current_longitude }}');
-    var map = new google.maps.Map(document.getElementById('map'), {
-        zoom: 15,
-        center: {lat: lat, lng: lng}
-    });
-    var marker = new google.maps.Marker({
-        position: {lat: lat, lng: lng},
-        map: map,
-        title: 'Bus Location'
-    });
-    // Live update every 10 seconds
-    setInterval(function() {
-        fetch(window.location.href, {headers: {'X-Requested-With': 'XMLHttpRequest'}})
-            .then(response => response.text())
-            .then(html => {
-                var parser = new DOMParser();
-                var doc = parser.parseFromString(html, 'text/html');
-                var newLat = Number(doc.getElementById('map').getAttribute('data-lat'));
-                var newLng = Number(doc.getElementById('map').getAttribute('data-lng'));
-                if (!isNaN(newLat) && !isNaN(newLng)) {
-                    marker.setPosition({lat: newLat, lng: newLng});
-                    map.setCenter({lat: newLat, lng: newLng});
-                }
-            });
-    }, 10000);
-}
-window.onload = initMap;
-</script>
+  <div style="display:flex;justify-content:center;">
+    <div style="background:var(--card-bg);border-radius:var(--radius);box-shadow:0 2px 8px rgba(0,0,0,0.07);padding:24px 32px;max-width:700px;width:100%;">
+      <div id="map" 
+           style="height:420px;width:100%;min-width:320px;min-height:320px;max-width:700px;border-radius:8px;border:1px solid var(--border);margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.10);" 
+           data-lat="{{ bus.current_latitude }}" 
+           data-lng="{{ bus.current_longitude }}">
+      </div>
+
+      <div id="map-loading" style="text-align:center;margin-top:10px;">
+        <span>Loading map...</span>
+      </div>
+
+      <div id="map-error" style="display:none;color:var(--danger);text-align:center;margin-top:10px;"></div>
+
+      <div style="text-align:right;margin-top:8px;">
+        <a href="https://schoolroute.silicon4forge.org/" target="_blank" style="color:var(--primary);font-weight:500;text-decoration:underline;">View Full Map</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDPqc3uljT9n77v0uTQikuRor5tSfSV0RI"></script>
+  <script>
+    (function() {
+      let map, marker;
+
+      function showError(msg) {
+        const errDiv = document.getElementById('map-error');
+        errDiv.textContent = msg;
+        errDiv.style.display = 'block';
+      }
+
+      function hideError() {
+        document.getElementById('map-error').style.display = 'none';
+      }
+
+      function updateMarker(newLat, newLng) {
+        if (marker) {
+          marker.setPosition({ lat: newLat, lng: newLng });
+          map.panTo({ lat: newLat, lng: newLng });
+        }
+      }
+
+      function pollBusLocation() {
+        fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+          .then(response => response.text())
+          .then(html => {
+            hideError();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newLat = Number(doc.getElementById('map').getAttribute('data-lat'));
+            const newLng = Number(doc.getElementById('map').getAttribute('data-lng'));
+            if (!isNaN(newLat) && !isNaN(newLng)) {
+              updateMarker(newLat, newLng);
+            }
+          })
+          .catch(err => {
+            showError('Failed to update bus location. Retrying...');
+            console.warn('Map update error:', err);
+          });
+      }
+
+      function initMap() {
+        const lat = Number('{{ bus.current_latitude }}');
+        const lng = Number('{{ bus.current_longitude }}');
+
+        map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 15,
+          center: { lat, lng },
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false
+        });
+
+        marker = new google.maps.Marker({
+          position: { lat, lng },
+          map: map,
+          title: 'Bus Location',
+          icon: {
+            url: 'https://maps.google.com/mapfiles/ms/icons/bus.png',
+            scaledSize: new google.maps.Size(40, 40)
+          }
+        });
+
+        document.getElementById('map-loading').style.display = 'none';
+
+        setInterval(pollBusLocation, 10000);
+      }
+
+      window.addEventListener('DOMContentLoaded', initMap);
+    })();
+  </script>
+
 {% else %}
-<p>No bus location available.</p>
+  <p style="color:var(--danger);text-align:center;">No bus location available.</p>
 {% endif %}
 {% endblock %}
