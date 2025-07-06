@@ -32,7 +32,7 @@ urlpatterns = [
     path('route/<int:route_id>/map/', views.route_map, name='route_map'),
     path('bus/update-location/', views.update_bus_location, name='update_bus_location'),
     path('parent/bus-map/', views.parent_bus_map, name='parent_bus_map'),
-    # path('driver/bus-map/', views.driver_bus_map, name='driver_bus_map'),
+    path('driver/bus-map/', views.driver_bus_map, name='driver_bus_map'),
     path('driver/bus-map/', views.driver_bus_map, name='driver_map_redirect'),
     path('choose-role/', views.choose_role, name='choose_role'),
     path('login/', auth_views.LoginView.as_view(template_name='busmonitor/login.html'), name='login'),
