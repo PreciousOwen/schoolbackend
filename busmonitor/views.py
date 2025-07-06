@@ -228,7 +228,7 @@ def route_map(request, route_id):
     # Here, just pass start/end locations to the template
     return render(request, 'busmonitor/route_map.html', {
         'route': route,
-        'google_maps_api_key': 'YOUR_GOOGLE_MAPS_API_KEY',
+        'google_maps_api_key': 'AIzaSyDPqc3uljT9n77v0uTQikuRor5tSfSV0RI',
     })
 
 @csrf_exempt
