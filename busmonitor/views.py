@@ -540,3 +540,16 @@ def route_delete(request, pk):
         messages.success(request, 'Route deleted successfully!')
         return redirect('admin_dashboard')
     return render(request, 'busmonitor/route_confirm_delete.html', {'route': route})
+
+@login_required
+def student_map_redirect(request, student_id):
+    student = get_object_or_404(Student, id=student_id, parent=request.user.parent)
+    # Get latest boarding record with action 'board'
+    boarding = BoardingHistory.objects.filter(student=student, action='board').order_by('-timestamp').first()
+    if not boarding or not student.route:
+        messages.warning(request, 'No boarding record or route found for this student.')
+        return redirect('parent_dashboard')
+    origin = boarding.gps_location
+    destination = student.route.end_location
+    map_url = f"http://localhost:5173/?origin={origin}&destination={destination}"
+    return redirect(map_url)

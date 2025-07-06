@@ -4,7 +4,14 @@
 <h3>Your Children</h3>
 <ul>
   {% for child in children %}
-    <li>{{ child.name }} (RFID: {{ child.rfid }}) - Route: {{ child.route }}</li>
+    <li>
+      {{ child.name }} (RFID: {{ child.rfid }}) - Route: {{ child.route }}
+      {% if child.route %}
+        <a href="{% url 'student_map_redirect' child.id %}" class="btn btn-primary">View Map</a>
+      {% else %}
+        <span class="text-muted">No route assigned</span>
+      {% endif %}
+    </li>
   {% endfor %}
 </ul>
 <ul>

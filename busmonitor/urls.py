@@ -37,4 +37,5 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(template_name='busmonitor/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='choose_role'), name='logout'),
     path('admin-login/', views.custom_admin_login, name='custom_admin_login'),
+    path('parent/student/<int:student_id>/map/', views.student_map_redirect, name='student_map_redirect'),
 ]
