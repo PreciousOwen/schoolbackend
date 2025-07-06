@@ -68,7 +68,8 @@ def parent_dashboard(request):
 def driver_dashboard(request):
     driver = getattr(request.user, 'driver', None)
     if not driver:
-        return redirect('dashboard')
+        messages.error(request, 'You do not have a driver account. Please contact the administrator.')
+        return render(request, 'busmonitor/unknown_role.html')
     bus = Bus.objects.filter(driver=driver).first()
     route = Route.objects.filter(bus=bus).first() if bus else None
     students = Student.objects.filter(route=route) if route else []
