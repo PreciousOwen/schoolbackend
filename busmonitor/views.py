@@ -551,5 +551,29 @@ def student_map_redirect(request, student_id):
         return redirect('parent_dashboard')
     origin = boarding.gps_location
     destination = student.route.end_location
-    map_url = f"http://localhost:5173/?origin={origin}&destination={destination}"
+    map_url = f"https://schoolroute.silicon4forge.org/?origin={origin}&destination={destination}"
+    return redirect(map_url)
+
+@login_required
+def driver_map_redirect(request):
+    driver = getattr(request.user, 'driver', None)
+    bus = getattr(driver, 'bus', None) if driver else None
+    route = getattr(bus, 'route', None) if bus else None
+    if not route:
+        return redirect('driver_dashboard')
+    origin = route.start_location
+    destination = route.end_location
+    map_url = f"https://schoolroute.silicon4forge.org/?origin={origin}&destination={destination}"
+    return redirect(map_url)
+
+@login_required
+def admin_driver_map_redirect(request, driver_id):
+    driver = get_object_or_404(Driver, id=driver_id)
+    bus = getattr(driver, 'bus', None)
+    route = getattr(bus, 'route', None) if bus else None
+    if not route:
+        return redirect('admin_dashboard')
+    origin = route.start_location
+    destination = route.end_location
+    map_url = f"https://schoolroute.silicon4forge.org/?origin={origin}&destination={destination}"
     return redirect(map_url)
