@@ -20,7 +20,10 @@
 <div id="map-error" style="display:none;color:var(--danger);text-align:center;margin-top:10px;"></div>
 
 <div style="text-align:right;margin-top:8px;">
-  <a href="https://schoolroute.silicon4forge.org/" target="_blank" style="color:var(--primary);font-weight:500;text-decoration:underline;">View Full Map</a>
+  <a href="https://schoolroute.silicon4forge.org/" target="_blank"
+     style="color:var(--primary);font-weight:500;text-decoration:underline;">
+    View Full Map
+  </a>
 </div>
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDPqc3uljT9n77v0uTQikuRor5tSfSV0RI"></script>
@@ -33,6 +36,7 @@
     errDiv.textContent = msg;
     errDiv.style.display = 'block';
   }
+
   function hideError() {
     const errDiv = document.getElementById('map-error');
     errDiv.style.display = 'none';
@@ -74,7 +78,7 @@
           directionsRenderer.setDirections(result);
         } else {
           showError('Failed to load route. Please try again later.');
-          console.error('Directions request failed due to ' + status);
+          console.error('Directions request failed:', status);
         }
       }
     );
