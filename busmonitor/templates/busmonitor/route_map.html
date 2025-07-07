@@ -1,64 +1,86 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2 style="color: var(--primary); margin-bottom: 20px; text-align: center;">
-    Route Map: {{ route.name }}
-</h2>
+<h2 style="color:var(--primary);margin-bottom:30px;text-align:center;">Route Map: {{ route.name }}</h2>
 
-<p style="text-align: center;">
-    <strong>From:</strong> {{ route.start_location }}<br>
-    <strong>To:</strong> {{ route.end_location }}
+<p style="text-align:center;">
+  From: {{ route.start_location }}<br>
+  To: {{ route.end_location }}
 </p>
 
 <div id="map"
-     style="height: 450px; width: 100%; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); margin-top: 20px;">
+     style="height:420px;width:100%;min-width:320px;min-height:320px;max-width:700px;border-radius:8px;border:1px solid var(--border);margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.10);margin-left:auto;margin-right:auto"
+     data-start="{{ route.start_location|escapejs }}"
+     data-end="{{ route.end_location|escapejs }}">
 </div>
 
-<div id="map-error" style="color: var(--danger); text-align: center; margin-top: 15px; display: none;"></div>
+<div id="map-loading" style="text-align:center;margin-top:10px;">
+  <span>Loading map...</span>
+</div>
 
-<!-- Load Google Maps JS API -->
-<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}"></script>
+<div id="map-error" style="display:none;color:var(--danger);text-align:center;margin-top:10px;"></div>
 
+<div style="text-align:right;margin-top:8px;">
+  <a href="https://schoolroute.silicon4forge.org/" target="_blank" style="color:var(--primary);font-weight:500;text-decoration:underline;">View Full Map</a>
+</div>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDPqc3uljT9n77v0uTQikuRor5tSfSV0RI"></script>
 <script>
-(function () {
-    function initMap() {
-        const start = '{{ route.start_location|escapejs }}';
-        const end = '{{ route.end_location|escapejs }}';
+(function() {
+  let map, directionsService, directionsRenderer;
 
-        const map = new google.maps.Map(document.getElementById('map'), {
-            zoom: 7,
-            center: { lat: 0, lng: 0 },
-            mapTypeControl: false,
-            streetViewControl: false,
-            fullscreenControl: false
-        });
+  function showError(msg) {
+    const errDiv = document.getElementById('map-error');
+    errDiv.textContent = msg;
+    errDiv.style.display = 'block';
+  }
+  function hideError() {
+    const errDiv = document.getElementById('map-error');
+    errDiv.style.display = 'none';
+  }
 
-        const directionsService = new google.maps.DirectionsService();
-        const directionsRenderer = new google.maps.DirectionsRenderer({
-            map: map,
-            suppressMarkers: false,
-            polylineOptions: {
-                strokeColor: "#007bff",
-                strokeWeight: 5
-            }
-        });
+  function initMap() {
+    const mapDiv = document.getElementById('map');
+    const start = mapDiv.getAttribute('data-start');
+    const end = mapDiv.getAttribute('data-end');
 
-        directionsService.route({
-            origin: start,
-            destination: end,
-            travelMode: google.maps.TravelMode.DRIVING
-        }, function (response, status) {
-            if (status === 'OK') {
-                directionsRenderer.setDirections(response);
-            } else {
-                console.error('Directions request failed: ' + status);
-                document.getElementById('map-error').textContent =
-                    'Failed to load route. Please check the locations or try again later.';
-                document.getElementById('map-error').style.display = 'block';
-            }
-        });
-    }
+    map = new google.maps.Map(mapDiv, {
+      zoom: 7,
+      center: { lat: 0, lng: 0 },
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: false
+    });
 
-    window.addEventListener('DOMContentLoaded', initMap);
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer({
+      map: map,
+      suppressMarkers: false,
+      polylineOptions: {
+        strokeColor: "#007bff",
+        strokeWeight: 5
+      }
+    });
+
+    directionsService.route(
+      {
+        origin: start,
+        destination: end,
+        travelMode: google.maps.TravelMode.DRIVING
+      },
+      (result, status) => {
+        document.getElementById('map-loading').style.display = 'none';
+        if (status === 'OK') {
+          hideError();
+          directionsRenderer.setDirections(result);
+        } else {
+          showError('Failed to load route. Please try again later.');
+          console.error('Directions request failed due to ' + status);
+        }
+      }
+    );
+  }
+
+  window.addEventListener('DOMContentLoaded', initMap);
 })();
 </script>
 {% endblock %}
