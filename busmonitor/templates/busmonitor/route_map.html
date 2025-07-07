@@ -1,31 +1,64 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Route Map: {{ route.name }}</h2>
-<p>From: {{ route.start_location }}<br>To: {{ route.end_location }}</p>
-<div id="map" style="height:400px;width:100%;"></div>
+<h2 style="color: var(--primary); margin-bottom: 20px; text-align: center;">
+    Route Map: {{ route.name }}
+</h2>
+
+<p style="text-align: center;">
+    <strong>From:</strong> {{ route.start_location }}<br>
+    <strong>To:</strong> {{ route.end_location }}
+</p>
+
+<div id="map"
+     style="height: 450px; width: 100%; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); margin-top: 20px;">
+</div>
+
+<div id="map-error" style="color: var(--danger); text-align: center; margin-top: 15px; display: none;"></div>
+
+<!-- Load Google Maps JS API -->
 <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}"></script>
+
 <script>
-function initMap() {
-    var start = '{{ route.start_location|escapejs }}';
-    var end = '{{ route.end_location|escapejs }}';
-    var geocoder = new google.maps.Geocoder();
-    var map = new google.maps.Map(document.getElementById('map'), { zoom: 10, center: {lat:0, lng:0} });
-    geocoder.geocode({ 'address': start }, function(results, status) {
-        if (status === 'OK') {
-            map.setCenter(results[0].geometry.location);
-            var markerA = new google.maps.Marker({ map: map, position: results[0].geometry.location, label: 'A' });
-            geocoder.geocode({ 'address': end }, function(results2, status2) {
-                if (status2 === 'OK') {
-                    var markerB = new google.maps.Marker({ map: map, position: results2[0].geometry.location, label: 'B' });
-                    var bounds = new google.maps.LatLngBounds();
-                    bounds.extend(markerA.getPosition());
-                    bounds.extend(markerB.getPosition());
-                    map.fitBounds(bounds);
-                }
-            });
-        }
-    });
-}
-window.onload = initMap;
+(function () {
+    function initMap() {
+        const start = '{{ route.start_location|escapejs }}';
+        const end = '{{ route.end_location|escapejs }}';
+
+        const map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 7,
+            center: { lat: 0, lng: 0 },
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: false
+        });
+
+        const directionsService = new google.maps.DirectionsService();
+        const directionsRenderer = new google.maps.DirectionsRenderer({
+            map: map,
+            suppressMarkers: false,
+            polylineOptions: {
+                strokeColor: "#007bff",
+                strokeWeight: 5
+            }
+        });
+
+        directionsService.route({
+            origin: start,
+            destination: end,
+            travelMode: google.maps.TravelMode.DRIVING
+        }, function (response, status) {
+            if (status === 'OK') {
+                directionsRenderer.setDirections(response);
+            } else {
+                console.error('Directions request failed: ' + status);
+                document.getElementById('map-error').textContent =
+                    'Failed to load route. Please check the locations or try again later.';
+                document.getElementById('map-error').style.display = 'block';
+            }
+        });
+    }
+
+    window.addEventListener('DOMContentLoaded', initMap);
+})();
 </script>
 {% endblock %}
