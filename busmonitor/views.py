@@ -223,13 +223,13 @@ def export_boarding_history(request):
 
 @login_required
 def route_map(request, route_id):
-    route = Route.objects.get(id=route_id)
-    # Example: you would use Google Maps API or similar in production
-    # Here, just pass start/end locations to the template
-    return render(request, 'busmonitor/route_map.html', {
-        'route': route,
-        'google_maps_api_key': 'AIzaSyDPqc3uljT9n77v0uTQikuRor5tSfSV0RI',
-    })
+    route = get_object_or_404(Route, id=route_id)
+
+    origin = route.start_location
+    destination = route.end_location
+
+    map_url = f"https://schoolroute.silicon4forge.org/?origin={origin}&destination={destination}"
+    return redirect(map_url)
 
 @csrf_exempt
 def update_bus_location(request):
