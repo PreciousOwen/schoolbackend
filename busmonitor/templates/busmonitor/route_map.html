@@ -1,90 +1,107 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2 style="color:var(--primary);margin-bottom:30px;text-align:center;">Route Map: {{ route.name }}</h2>
+<h2 style="color: var(--primary); margin-bottom: 30px; text-align: center;">
+  Your Bus Location
+</h2>
 
-<p style="text-align:center;">
-  From: {{ route.start_location }}<br>
-  To: {{ route.end_location }}
-</p>
+{% if bus and bus.current_latitude and bus.current_longitude %}
+  <div style="display: flex; justify-content: center;">
+    <div style="background: var(--card-bg); border-radius: var(--radius); box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 24px 32px; max-width: 600px; width: 100%; margin-bottom: 30px;">
+      <h3 style="color: var(--primary); margin-bottom: 10px;">{{ route.name }}</h3>
 
-<div id="map"
-     style="height:420px;width:100%;min-width:320px;min-height:320px;max-width:700px;border-radius:8px;border:1px solid var(--border);margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.10);margin-left:auto;margin-right:auto"
-     data-start="{{ route.start_location|escapejs }}"
-     data-end="{{ route.end_location|escapejs }}">
-</div>
+      <div id="map-1"
+           style="height: 420px; width: 100%; min-width: 320px; min-height: 320px; max-width: 700px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.10);"
+           data-lat="{{ bus.current_latitude }}"
+           data-lng="{{ bus.current_longitude }}">
+      </div>
 
-<div id="map-loading" style="text-align:center;margin-top:10px;">
-  <span>Loading map...</span>
-</div>
+      <div id="map-loading-1" style="text-align:center; margin-top: 10px;">
+        <span>Loading map...</span>
+      </div>
+      <div id="map-error-1" style="display:none; color:var(--danger); text-align:center; margin-top:10px;"></div>
 
-<div id="map-error" style="display:none;color:var(--danger);text-align:center;margin-top:10px;"></div>
+      <div style="text-align: right; margin-top: 8px;">
+        <a href="https://schoolroute.silicon4forge.org/" target="_blank" style="color: var(--primary); font-weight: 500; text-decoration: underline;">
+          View Full Map
+        </a>
+      </div>
 
-<div style="text-align:right;margin-top:8px;">
-  <a href="https://schoolroute.silicon4forge.org/" target="_blank"
-     style="color:var(--primary);font-weight:500;text-decoration:underline;">
-    View Full Map
-  </a>
-</div>
+      <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}"></script>
+      <script>
+        (function() {
+          let map, marker;
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDPqc3uljT9n77v0uTQikuRor5tSfSV0RI"></script>
-<script>
-(function() {
-  let map, directionsService, directionsRenderer;
+          function showError(msg) {
+            const errDiv = document.getElementById('map-error-1');
+            errDiv.textContent = msg;
+            errDiv.style.display = 'block';
+          }
 
-  function showError(msg) {
-    const errDiv = document.getElementById('map-error');
-    errDiv.textContent = msg;
-    errDiv.style.display = 'block';
-  }
+          function hideError() {
+            const errDiv = document.getElementById('map-error-1');
+            errDiv.style.display = 'none';
+          }
 
-  function hideError() {
-    const errDiv = document.getElementById('map-error');
-    errDiv.style.display = 'none';
-  }
+          function updateMarker(newLat, newLng) {
+            if (marker) {
+              marker.setPosition({ lat: newLat, lng: newLng });
+              map.panTo({ lat: newLat, lng: newLng });
+            }
+          }
 
-  function initMap() {
-    const mapDiv = document.getElementById('map');
-    const start = mapDiv.getAttribute('data-start');
-    const end = mapDiv.getAttribute('data-end');
+          function pollBusLocation() {
+            fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+              .then(response => response.text())
+              .then(html => {
+                hideError();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newLat = Number(doc.getElementById('map-1').getAttribute('data-lat'));
+                const newLng = Number(doc.getElementById('map-1').getAttribute('data-lng'));
+                if (!isNaN(newLat) && !isNaN(newLng)) {
+                  updateMarker(newLat, newLng);
+                }
+              })
+              .catch(err => {
+                showError('Failed to update bus location. Retrying...');
+                console.warn('Failed to update bus location:', err);
+              });
+          }
 
-    map = new google.maps.Map(mapDiv, {
-      zoom: 7,
-      center: { lat: 0, lng: 0 },
-      mapTypeControl: false,
-      streetViewControl: false,
-      fullscreenControl: false
-    });
+          function initMap() {
+            const lat = Number('{{ bus.current_latitude }}');
+            const lng = Number('{{ bus.current_longitude }}');
 
-    directionsService = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer({
-      map: map,
-      suppressMarkers: false,
-      polylineOptions: {
-        strokeColor: "#007bff",
-        strokeWeight: 5
-      }
-    });
+            map = new google.maps.Map(document.getElementById('map-1'), {
+              zoom: 15,
+              center: { lat: lat, lng: lng },
+              mapTypeControl: false,
+              streetViewControl: false,
+              fullscreenControl: false
+            });
 
-    directionsService.route(
-      {
-        origin: start,
-        destination: end,
-        travelMode: google.maps.TravelMode.DRIVING
-      },
-      (result, status) => {
-        document.getElementById('map-loading').style.display = 'none';
-        if (status === 'OK') {
-          hideError();
-          directionsRenderer.setDirections(result);
-        } else {
-          showError('Failed to load route. Please try again later.');
-          console.error('Directions request failed:', status);
-        }
-      }
-    );
-  }
+            marker = new google.maps.Marker({
+              position: { lat: lat, lng: lng },
+              map: map,
+              title: 'Bus Location',
+              icon: {
+                url: 'https://maps.google.com/mapfiles/ms/icons/bus.png',
+                scaledSize: new google.maps.Size(40, 40)
+              }
+            });
 
-  window.addEventListener('DOMContentLoaded', initMap);
-})();
-</script>
+            document.getElementById('map-loading-1').style.display = 'none';
+            setInterval(pollBusLocation, 10000);
+          }
+
+          window.addEventListener('DOMContentLoaded', initMap);
+        })();
+      </script>
+    </div>
+  </div>
+
+{% else %}
+  <p style="color: var(--danger); text-align: center;">No bus location available.</p>
+{% endif %}
+
 {% endblock %}
