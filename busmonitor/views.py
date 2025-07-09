@@ -179,13 +179,44 @@ def register_student(request):
         form = StudentForm()
     return render(request, 'busmonitor/register_student.html', {'form': form})
 
+import json
+# from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from django.utils import timezone
+# from .models import Student, Bus, BoardingHistory # Assuming your models are in the same app
+
 @csrf_exempt
 def rfid_scan(request):
     if request.method == 'POST':
-        rfid = request.POST.get('rfid')
-        bus_id = request.POST.get('bus_id')
-        gps_location = request.POST.get('gps_location', '')
-        action = request.POST.get('action', 'board')
+        data = {}
+        # Check if the request content type is JSON
+        if request.content_type == 'application/json':
+            try:
+                data = json.loads(request.body)
+            except json.JSONDecodeError:
+                return JsonResponse({'status': 'error', 'message': 'Invalid JSON format.'}, status=400)
+        # Otherwise, assume it's form-data
+        else:
+            data = request.POST
+
+        # Now, retrieve parameters from the 'data' dictionary, which could be from JSON or form-data
+        rfid = data.get('rfid')
+        bus_id = data.get('bus_id')
+        gps_location = data.get('gps_location', '')
+        action = data.get('action', 'board')
+
+        # Basic validation for required fields
+        if not rfid:
+            return JsonResponse({'status': 'error', 'message': 'RFID is required.'}, status=400)
+        if not bus_id:
+            return JsonResponse({'status': 'error', 'message': 'Bus ID is required.'}, status=400)
+
+        # Convert bus_id to integer, as it's likely stored as an integer in your model
+        try:
+            bus_id = int(bus_id)
+        except (ValueError, TypeError):
+            return JsonResponse({'status': 'error', 'message': 'Bus ID must be a valid number.'}, status=400)
+
         try:
             student = Student.objects.get(rfid=rfid)
             bus = Bus.objects.get(id=bus_id)
@@ -201,7 +232,11 @@ def rfid_scan(request):
             return JsonResponse({'status': 'error', 'message': 'Student not found.'}, status=404)
         except Bus.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Bus not found.'}, status=404)
-    return JsonResponse({'status': 'error', 'message': 'Invalid request.'}, status=400)
+        except Exception as e:
+            # Catch any other unexpected errors
+            return JsonResponse({'status': 'error', 'message': f'An unexpected error occurred: {str(e)}'}, status=500)
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=400)
 
 @login_required
 def export_boarding_history(request):
