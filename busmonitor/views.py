@@ -199,19 +199,16 @@ def rfid_scan(request):
         else:
             data = request.POST
 
-        # Now, retrieve parameters from the 'data' dictionary, which could be from JSON or form-data
         rfid = data.get('rfid')
         bus_id = data.get('bus_id')
         gps_location = data.get('gps_location', '')
         action = data.get('action', 'board')
 
-        # Basic validation for required fields
         if not rfid:
             return JsonResponse({'status': 'error', 'message': 'RFID is required.'}, status=400)
         if not bus_id:
             return JsonResponse({'status': 'error', 'message': 'Bus ID is required.'}, status=400)
 
-        # Convert bus_id to integer, as it's likely stored as an integer in your model
         try:
             bus_id = int(bus_id)
         except (ValueError, TypeError):
@@ -227,13 +224,19 @@ def rfid_scan(request):
                 action=action,
                 gps_location=gps_location
             )
-            return JsonResponse({'status': 'success', 'message': f'{student.name} {action}ed the bus.'})
+            # Add parent phone number to response
+            parent_phone = student.parent.phone_number if student.parent else None
+            return JsonResponse({
+                'status': 'success',
+                'message': f'{student.name} {action}ed the bus.',
+                'student_name': student.name,
+                'parent_phone_number': parent_phone
+            })
         except Student.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Student not found.'}, status=404)
         except Bus.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Bus not found.'}, status=404)
         except Exception as e:
-            # Catch any other unexpected errors
             return JsonResponse({'status': 'error', 'message': f'An unexpected error occurred: {str(e)}'}, status=500)
     
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=400)
