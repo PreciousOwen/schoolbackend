@@ -184,18 +184,15 @@ import json
 from django.http import JsonResponse
 from django.utils import timezone
 # from .models import Student, Bus, BoardingHistory # Assuming your models are in the same app
-
 @csrf_exempt
 def rfid_scan(request):
     if request.method == 'POST':
-        data = {}
-        # Check if the request content type is JSON
+        # Parse JSON or form-data
         if request.content_type == 'application/json':
             try:
                 data = json.loads(request.body)
             except json.JSONDecodeError:
                 return JsonResponse({'status': 'error', 'message': 'Invalid JSON format.'}, status=400)
-        # Otherwise, assume it's form-data
         else:
             data = request.POST
 
@@ -217,6 +214,7 @@ def rfid_scan(request):
         try:
             student = Student.objects.get(rfid=rfid)
             bus = Bus.objects.get(id=bus_id)
+
             BoardingHistory.objects.create(
                 student=student,
                 bus=bus,
@@ -224,8 +222,9 @@ def rfid_scan(request):
                 action=action,
                 gps_location=gps_location
             )
-            # Add parent phone number to response
+
             parent_phone = student.parent.phone_number if student.parent else None
+
             return JsonResponse({
                 'status': 'success',
                 'message': f'{student.name} {action}ed the bus.',
@@ -238,7 +237,7 @@ def rfid_scan(request):
             return JsonResponse({'status': 'error', 'message': 'Bus not found.'}, status=404)
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': f'An unexpected error occurred: {str(e)}'}, status=500)
-    
+
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=400)
 
 @login_required

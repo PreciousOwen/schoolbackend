@@ -7,7 +7,7 @@ python manage.py migrate --noinput
 python manage.py shell << END
 from django.contrib.auth import get_user_model
 User = get_user_model()
-if not User.objects.filter(username='preciousowen').exists():
-    User.objects.create_superuser('preciousowen', 'precioustwaya1@gmail.com', '12345678')
+if not User.objects.filter(username='leticiajackson').exists():
+    User.objects.create_superuser('leticiajackson', 'precioustwaya1@gmail.com', '12345678')
 END
 exec "$@"
