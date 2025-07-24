@@ -184,37 +184,55 @@ import json
 from django.http import JsonResponse
 from django.utils import timezone
 # from .models import Student, Bus, BoardingHistory # Assuming your models are in the same app
+
 @csrf_exempt
 def rfid_scan(request):
+    """
+    Handles RFID scan data for student boarding/unboarding on a bus.
+    Expects POST requests with JSON data.
+    """
     if request.method == 'POST':
-        # Parse JSON or form-data
-        if request.content_type == 'application/json':
-            try:
+        # --- 1. Parse Request Body ---
+        try:
+            # Attempt to parse JSON body
+            if request.content_type == 'application/json':
                 data = json.loads(request.body)
-            except json.JSONDecodeError:
-                return JsonResponse({'status': 'error', 'message': 'Invalid JSON format.'}, status=400)
-        else:
-            data = request.POST
+            else:
+                # Fallback to form-data if content-type is not JSON
+                # This might be useful for testing via browser forms, but ESP8266 sends JSON
+                data = request.POST
+        except json.JSONDecodeError:
+            # Return error if JSON is invalid
+            return JsonResponse({'status': 'error', 'message': 'Invalid JSON format.'}, status=400)
+        except Exception as e:
+            # Catch any other parsing errors
+            return JsonResponse({'status': 'error', 'message': f'Error parsing request body: {str(e)}'}, status=400)
 
+        # --- 2. Extract and Validate Required Data ---
         rfid = data.get('rfid')
-        bus_id = data.get('bus_id')
-        gps_location = data.get('gps_location', '')
-        action = data.get('action', 'board')
+        bus_id_str = data.get('bus_id') # Get as string first for validation
+        gps_location = data.get('gps_location', '') # Optional, default to empty string
+        action = data.get('action', 'board') # Default action is 'board'
 
+        # Basic validation for essential fields
         if not rfid:
             return JsonResponse({'status': 'error', 'message': 'RFID is required.'}, status=400)
-        if not bus_id:
+        if not bus_id_str:
             return JsonResponse({'status': 'error', 'message': 'Bus ID is required.'}, status=400)
 
+        # Validate and convert bus_id to integer
         try:
-            bus_id = int(bus_id)
+            bus_id = int(bus_id_str)
         except (ValueError, TypeError):
             return JsonResponse({'status': 'error', 'message': 'Bus ID must be a valid number.'}, status=400)
 
+        # --- 3. Process RFID Scan ---
         try:
+            # Retrieve student and bus objects from the database
             student = Student.objects.get(rfid=rfid)
             bus = Bus.objects.get(id=bus_id)
 
+            # Create a new boarding history record
             BoardingHistory.objects.create(
                 student=student,
                 bus=bus,
@@ -223,22 +241,32 @@ def rfid_scan(request):
                 gps_location=gps_location
             )
 
-            parent_phone = student.parent.phone_number if student.parent else None
+            # Get parent phone number, defaulting to an empty string if not available
+            # This ensures the 'parent_phone_number' key is always present in the response
+            parent_phone = student.parent.phone_number if student.parent else ""
 
+            # --- 4. Return Success Response ---
+            # Simplified success response, as requested
             return JsonResponse({
-                'status': 'success',
-                'message': f'{student.name} {action}ed the bus.',
                 'student_name': student.name,
                 'parent_phone_number': parent_phone
             })
+
         except Student.DoesNotExist:
+            # Handle case where RFID does not match any student
             return JsonResponse({'status': 'error', 'message': 'Student not found.'}, status=404)
         except Bus.DoesNotExist:
+            # Handle case where bus ID does not match any bus
             return JsonResponse({'status': 'error', 'message': 'Bus not found.'}, status=404)
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': f'An unexpected error occurred: {str(e)}'}, status=500)
+            # Catch any other unexpected errors during processing
+            # Log this error for debugging in a real application
+            print(f"An unexpected error occurred: {e}") # For debugging, remove in production
+            return JsonResponse({'status': 'error', 'message': f'An unexpected server error occurred: {str(e)}'}, status=500)
 
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=400)
+    # --- 5. Handle Invalid Request Method ---
+    # Return error for any method other than POST
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method. Only POST is allowed.'}, status=405) # 405 Method Not Allowed
 
 @login_required
 def export_boarding_history(request):
