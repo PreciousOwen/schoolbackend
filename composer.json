@@ -1,0 +1,30 @@
+{
+    "name": "schoolbus-monitoring/php-version",
+    "description": "PHP version of the School Bus Monitoring System",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Developer",
+            "email": "developer@example.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "ext-pdo": "*",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    },
+    "scripts": {
+        "test": "php scripts/test_application.php",
+        "migrate": "php scripts/run_migrations.php",
+        "create-admin": "php scripts/create_admin_user.php"
+    }
+}
