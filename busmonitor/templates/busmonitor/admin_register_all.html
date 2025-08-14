@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="form-container">
+  <h2>Register Parent, Driver, and Student</h2>
+  <form method="post">
+    {% csrf_token %}
+    <h3>Parent Info</h3>
+    {{ parent_form.as_p }}
+    <h3>Driver Info</h3>
+    {{ driver_form.as_p }}
+    <h3>Student Info</h3>
+    {{ student_form.as_p }}
+    <button type="submit" class="btn">Register All</button>
+  </form>
+</div>
+<style>
+.form-container {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 30px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.form-container input, .form-container select {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0 20px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+.btn {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.2s;
+}
+.btn:hover {
+  background: #125ea2;
+}
+h2, h3 {
+  text-align: center;
+  color: #1976d2;
+  margin-top: 20px;
+}
+</style>
+{% endblock %}
